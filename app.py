@@ -12,7 +12,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 st.title("تطبيق إدارة المحاسبين والفروع")
 
 # -----------------------------
-# اختبار عدد الصفوف
+# اختبار عدد الصفوف في rota_entries
 # -----------------------------
 try:
     res = supabase.table("rota_entries").select("*").execute()
@@ -20,17 +20,18 @@ try:
 except Exception as e:
     st.error(f"حدث خطأ أثناء الاتصال بـ Supabase: {e}")
 
-# جلب الفروع والمحصلين
+# -----------------------------
+# جلب بيانات الفروع والمحصلين
+# -----------------------------
 branches_res = supabase.table("branches").select("*").execute()
 branches = branches_res.data or []
 
 users_res = supabase.table("users").select("*").execute()
 users = users_res.data or []
 
-# تحويلهم لقوائم للاستخدام في selectbox
-branch_options = {b['name']: b['id'] for b in branches} if branches else {}
-accountant_options = {u['name']: u['id'] for u in users} if users else {}
-
+# تحويل البيانات لقوائم للاستخدام في selectbox
+branch_options = {b['name']: b['id'] for b in branches}
+accountant_options = {u['name']: u['id'] for u in users}
 
 # -----------------------------
 # Form لإضافة سجل جديد
@@ -38,34 +39,32 @@ accountant_options = {u['name']: u['id'] for u in users} if users else {}
 with st.form("add_entry"):
     d = st.date_input("التاريخ", value=date.today())
 
-    if not branch_options or not accountant_options:
-        st.error("البيانات غير موجودة في الفروع أو المحصلين.")
-    else:
-        branch_name = st.selectbox("اختر الفرع", list(branch_options.keys()))
-        accountant_name = st.selectbox("اختر المحاسب", list(accountant_options.keys()))
+    branch_name = st.selectbox("اختر الفرع", list(branch_options.keys()))
+    accountant_name = st.selectbox("اختر المحاسب", list(accountant_options.keys()))
 
-        branch_id = branch_options[branch_name]
-        accountant_id = accountant_options[accountant_name]
+    # تحويل الاسم المختار إلى ID
+    branch_id = branch_options[branch_name]
+    accountant_id = accountant_options[accountant_name]
 
-        substitute_id = st.number_input("Substitute ID (اختياري)", min_value=0, step=1, value=0)
-        notes = st.text_area("ملاحظات (اختياري)")
+    substitute_id = st.number_input("Substitute ID (اختياري)", min_value=0, step=1, value=0)
+    notes = st.text_area("ملاحظات (اختياري)")
 
-        submit = st.form_submit_button("حفظ")
+    submit = st.form_submit_button("حفظ")
 
-        if submit:
-            payload = {
-                "date": d.isoformat(),
-                "branch_id": branch_id,
-                "accountant_id": accountant_id,
-                "substitute_id": int(substitute_id) if substitute_id != 0 else None,
-                "notes": notes
-            }
+    if submit:
+        payload = {
+            "date": d.isoformat(),
+            "branch_id": branch_id,
+            "accountant_id": accountant_id,
+            "substitute_id": int(substitute_id) if substitute_id != 0 else None,
+            "notes": notes
+        }
 
-            try:
-                res = supabase.table("rota_entries").insert(payload).execute()
-                if not res.data:
-                    st.error("حدث خطأ أثناء الحفظ.")
-                else:
-                    st.success("تم الحفظ بنجاح ✅")
-            except Exception as e:
-                st.error(f"حدث خطأ أثناء الاتصال بـ Supabase: {e}")
+        try:
+            res = supabase.table("rota_entries").insert(payload).execute()
+            if not res.data:
+                st.error("حدث خطأ أثناء الحفظ. تأكد من جدول RLS ووجود الأعمدة الصحيحة.")
+            else:
+                st.success("تم الحفظ بنجاح ✅")
+        except Exception as e:
+            st.error(f"حدث خطأ أثناء الاتصال بـ Supabase: {e}")
