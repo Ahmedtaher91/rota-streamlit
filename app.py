@@ -29,8 +29,8 @@ branches = branches_res.data or []
 users_res = supabase.table("users").select("*").execute()
 users = users_res.data or []
 
-branch_options = {b['name']: b['id'] for b in branches} if branches else {}
-accountant_options = {u['name']: u['id'] for u in users} if users else {}
+branch_options = {b['Name']: b['id'] for b in branches} if branches else {}
+accountant_options = {u['Name']: u['id'] for u in users} if users else {}
 
 # -----------------------------
 # Form لإضافة سجل جديد
