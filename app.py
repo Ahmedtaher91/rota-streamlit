@@ -3,7 +3,7 @@ from supabase import create_client
 from datetime import date
 
 # -----------------------------
-# إعداد الاتصال
+# إعداد الاتصال بـ Supabase
 # -----------------------------
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -21,12 +21,31 @@ except Exception as e:
     st.error(f"حدث خطأ أثناء الاتصال بـ Supabase: {e}")
 
 # -----------------------------
+# جلب بيانات الفروع والمحصلين
+# -----------------------------
+branches_res = supabase.table("branches").select("*").execute()
+branches = branches_res.data if branches_res.data else []
+
+users_res = supabase.table("users").select("*").execute()
+users = users_res.data if users_res.data else []
+
+# -----------------------------
 # Form لإضافة سجل جديد
 # -----------------------------
 with st.form("add_entry"):
     d = st.date_input("التاريخ", value=date.today())
-    branch_id = st.number_input("Branch ID", min_value=1, step=1)
-    accountant_id = st.number_input("Accountant ID", min_value=1, step=1)
+
+    # إعداد القوائم المنسدلة
+    branch_options = {b['name']: b['id'] for b in branches}
+    accountant_options = {u['name']: u['id'] for u in users}
+
+    branch_name = st.selectbox("اختر الفرع", options=list(branch_options.keys()))
+    accountant_name = st.selectbox("اختر المحاسب", options=list(accountant_options.keys()))
+
+    # تحويل الاسم المختار إلى ID
+    branch_id = branch_options[branch_name]
+    accountant_id = accountant_options[accountant_name]
+
     substitute_id = st.number_input("Substitute ID (اختياري)", min_value=0, step=1, value=0)
     notes = st.text_area("ملاحظات (اختياري)")
     submit = st.form_submit_button("حفظ")
@@ -34,8 +53,8 @@ with st.form("add_entry"):
     if submit:
         payload = {
             "date": d.isoformat(),
-            "branch_id": int(branch_id),
-            "accountant_id": int(accountant_id),
+            "branch_id": branch_id,
+            "accountant_id": accountant_id,
             "substitute_id": int(substitute_id) if substitute_id != 0 else None,
             "notes": notes
         }
