@@ -1,5 +1,20 @@
 import streamlit as st
 from supabase import create_client
+
+# إعداد الاتصال
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# اختبار عدد الصفوف في الجدول
+try:
+    res = supabase.table("rota_entries").select("*").execute()
+    st.write("عدد الصفوف قبل أي إضافة:", len(res.data))
+except Exception as e:
+    st.error(f"حدث خطأ أثناء الاتصال بـ Supabase: {e}")
+
+import streamlit as st
+from supabase import create_client
 from datetime import date
 
 # إعداد الاتصال
