@@ -34,15 +34,11 @@ with st.form("add_entry"):
     submit = st.form_submit_button("حفظ")
 
     if submit:
-        payload = {
-            "date": d.isoformat(),
-            "branch_id": branch_id,
-            "accountant_id": accountant_id,
-            "substitute_id": substitute_id if substitute_id != 0 else None,
-            "notes": notes
-        }
-        res = supabase.table("rota_entries").insert(payload).execute()
-        if res.error:
-            st.error(f"حدث خطأ أثناء الحفظ: {res.error}")
-        else:
-            st.success("تم الحفظ بنجاح ✅")
+       payload = {
+    "date": d.isoformat(),          # تحويل التاريخ لـ "YYYY-MM-DD"
+    "branch_id": int(branch_id),    # تأكد أنه int
+    "accountant_id": int(accountant_id),
+    "substitute_id": int(substitute_id) if substitute_id != 0 else None,
+    "notes": notes
+}
+res = supabase.table("rota_entries").insert(payload).execute()
